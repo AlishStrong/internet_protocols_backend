@@ -1,0 +1,17 @@
+@url = http://localhost:3000/whiteboard
+
+POST {{url}}
+Content-Type: application/json
+
+{
+  "creator": "Alisher",
+  "whiteboard": {
+    "name": "Alisher's whiteboard"
+  }
+}
+###
+
+###
+
+DELETE {{url}}/62310bda4b7711c3a02c3408
+Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJoYXNoZWRIb3N0SWQiOiIkMmIkMTEkLjhRLm1TZC55OHMzUlR3bTRPU2NaT0kzU0h6R1FQV3o3SEhydFIvN2IyLzdjaTFLaXlZOTIiLCJoYXNoZWRTZXNzaW9uSWQiOiIkMmIkMTEkdjVObDRUTFBmRjJab3Y4OU5DRDdDT2pnODVySHNid0g4ZEpkYmMvZHFLT0Z5MHI2UEJaOTYiLCJpYXQiOjE2NDczODE0NjZ9.fcPrppFHGssuPq5DSdF5f7KsU2hnelJloB_4V08pLsw

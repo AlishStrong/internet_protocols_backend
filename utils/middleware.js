@@ -4,7 +4,7 @@ const unknownEndpoint = (request, response) => {
 
 const errorHandler = (error, request, response, next) => {
   console.log(error.message)
-  response.status(400).json({ error: 'something went wrong' })
+  response.status(400).json({ error: 'Something went wrong' })
   next(error)
 }
 
