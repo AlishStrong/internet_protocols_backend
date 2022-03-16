@@ -1,6 +1,6 @@
 // Define endpoints paths here
 const INITIAL_PATH = '/api/init'
-const WHITEBOARD_SESSION_PATH = '/whiteboard'
+const WHITEBOARD_SESSION_PATH = '/api/whiteboard'
 const MONGODB_URI = process.env.MONGODB_URI
 
 module.exports = {
