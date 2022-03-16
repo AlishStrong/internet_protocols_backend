@@ -11,8 +11,9 @@ const getTokenFrom = request => {
   const authorization = request.get('authorization')
   if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
     return authorization.substring(7)
+  } else {
+    throw new Error(UNAUTHORIZED)
   }
-  return null
 }
 
 const createWhiteboard = async (request, response) => {
@@ -48,7 +49,7 @@ const createWhiteboard = async (request, response) => {
     .then(createdWhiteboard => {
       whiteboardId = createdWhiteboard._id
       const tokenBody = {
-        hashedHostId: bcrypt.hashSync(hostId.toString(), parseInt(process.env.ROUNDS)),
+        hashedUserId: bcrypt.hashSync(hostId.toString(), parseInt(process.env.ROUNDS)),
         hashedSessionId: bcrypt.hashSync(whiteboardId.toString(), parseInt(process.env.ROUNDS))
       }
       token = jwt.sign(tokenBody, process.env.SECRET)
@@ -143,10 +144,10 @@ const processRequest = async (request, response) => {
   }
 
   const hostToken = getTokenFrom(request)
-  const { hashedHostId, hashedSessionId } = jwt.verify(hostToken, process.env.SECRET)
+  const { hashedUserId, hashedSessionId } = jwt.verify(hostToken, process.env.SECRET)
 
-  if (hashedHostId && hashedSessionId) {
-    const hostCorrect = await bcrypt.compare(whiteboard.host.toString(), hashedHostId)
+  if (hashedUserId && hashedSessionId) {
+    const hostCorrect = await bcrypt.compare(whiteboard.host.toString(), hashedUserId)
     const sessionCorrect = await bcrypt.compare(whiteboard._id.toString(), hashedSessionId)
 
     if (!hostCorrect) {
@@ -199,10 +200,10 @@ const closeWhiteboard = async (request, response) => {
   }
 
   const hostToken = getTokenFrom(request)
-  const { hashedHostId, hashedSessionId } = jwt.verify(hostToken, process.env.SECRET)
+  const { hashedUserId, hashedSessionId } = jwt.verify(hostToken, process.env.SECRET)
 
-  if (hashedHostId && hashedSessionId) {
-    const hostCorrect = await bcrypt.compare(whiteboardToClose.host.toString(), hashedHostId)
+  if (hashedUserId && hashedSessionId) {
+    const hostCorrect = await bcrypt.compare(whiteboardToClose.host.toString(), hashedUserId)
     const sessionCorrect = await bcrypt.compare(whiteboardToClose._id.toString(), hashedSessionId)
 
     if (hostCorrect && sessionCorrect) {
