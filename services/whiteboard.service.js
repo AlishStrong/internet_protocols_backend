@@ -39,6 +39,14 @@ const notifyAboutClosure = (whiteboardId) => {
   websocketService.sendMessage(messageToClients)
 }
 
+const leaveSession = (userId, whiteboardId) => {
+  console.log(`User ${userId} is notified that he has left whiteboard ${whiteboardId}`)
+}
+
+const kickUser = (userId, whiteboardId) => {
+  console.log(`Host is notified if user ${userId} was successfully kicked`)
+}
+
 module.exports = {
   whiteboardExists,
   askHostToJoin,

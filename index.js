@@ -10,6 +10,7 @@ const port = 3001
 const cors = require('cors')
 const expressWs = require('express-ws')
 const websocketService = require('./services/websocket.service')
+const drawRouter = require('./controllers/draw.controller')
 
 expressWs(app)
 
@@ -35,6 +36,7 @@ app.use(express.json())
 
 // Add Routes here
 app.use(config.WHITEBOARD_SESSION_PATH, whiteboardRouter)
+app.use(config.DRAW_PATH, drawRouter)
 
 // Add postprocessing middleware here
 app.use(middleware.unknownEndpoint)
