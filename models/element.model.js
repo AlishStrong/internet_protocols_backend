@@ -5,7 +5,13 @@ const elementSchema = new mongoose.Schema({
   coordinates: [{
     x: { type: Number, required: true },
     y: { type: Number, required: true }
-  }]
+  }],
+  stickyNoteText: { type: String, required: false },
+  img:{
+    data: { type: Buffer, required: false },
+    contentType: { type: String, required: false },
+    comment: { type: String, required: false }
+  }
 })
 
 const Element = mongoose.model('Element', elementSchema)
