@@ -4,12 +4,13 @@ const Whiteboard = require('../models/whiteboard.model')
 const Element = require('../models/element.model')
 const { removeObject, removeImageComment } = require('../services/remove.service')
 
-const { WHITEBOARD_DOES_NOT_EXIST, REMOVAL_ERROR, ELEMENT_DOES_NOT_EXIST } = require('../utils/error.constants')
+const { WHITEBOARD_DOES_NOT_EXIST, REMOVAL_ERROR, ELEMENT_DOES_NOT_EXIST, UNKNOWN_ACTIONID } = require('../utils/error.constants')
 
-const removeElement = async (request, response) => {
-  const elementId = new mongoose.Types.ObjectId(request.params.elementId)
-  const whiteboardId = new mongoose.Types.ObjectId(request.params.whiteboardId)
-  const actionId = request.params.actionId
+const removeController = async (request, response) => {
+  const body = request.body
+  const elementId = new mongoose.Types.ObjectId(body.elementId)
+  const whiteboardId = new mongoose.Types.ObjectId(body.whiteboardId)
+  const actionId = body.actionId
 
   const whiteboard = await Whiteboard.findById(whiteboardId)
   if (!whiteboard) throw new Error(WHITEBOARD_DOES_NOT_EXIST)
@@ -21,40 +22,52 @@ const removeElement = async (request, response) => {
   const elementList = whiteboard.elements
 
   switch(actionId) {
-
+    //Use Case 8: User removes a sticky note from the whiteboard
     case 8:{
       // not sure if this check is necessary or if the Element.findById check is enough
       if (elementList.find(e => e === element)) {
-        // dummy func
-        removeObject(elementId)
-        return response.status(200).send(`Note with ID: ${request.params.elementId} has been removed.`)
+        removeObject(elementId,whiteboardId).then((res) => {
+          response.status(200).send(res)
+        }).catch((e) => {
+          throw new Error(e)
+        })
+
       } else {
         throw new Error(REMOVAL_ERROR)
       }
+      break
     }
+    //Use Case 10: User removes an image from the whiteboard
     case 10:{
       if (elementList.find(e => e === element)) {
-        // dummy func
-        removeObject(elementId)
-        return response.status(200).send(`Image with ID: ${request.params.elementId} has been removed.`)
+        removeObject(elementId,whiteboardId).then((res) => {
+          response.status(200).send(res)
+        }).catch((e) => {
+          throw new Error(e)
+        })
       } else {
         throw new Error(REMOVAL_ERROR)
       }
+      break
     }
+    //Use Case 12: User removes a comment from the image on the whiteboard
     case 12:{
       if (elementList.find(e => e === element)) {
-        // dummy func
-        removeImageComment(elementId)
-        return response.status(200).send(`Comment removed from image with ID: ${request.params.elementId}.`)
+        removeImageComment(elementId,whiteboardId).then((res) => {
+          response.status(200).send(res)
+        }).catch((e) => {
+          throw new Error(e)
+        })
       } else {
         throw new Error(REMOVAL_ERROR)
       }
+      break
     }
     default:
-      console.log('wrong actionID')
+      throw new Error(UNKNOWN_ACTIONID)
   }
 }
 
-removeRouter.post('/', removeElement)
+removeRouter.post('/', removeController)
 
 module.exports = removeRouter
