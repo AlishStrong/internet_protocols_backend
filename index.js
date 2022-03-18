@@ -5,12 +5,15 @@ const express = require('express')
 const middleware = require('./utils/middleware')
 const config = require('./utils/config')
 const whiteboardRouter = require('./controllers/whiteboard.controller')
+const addRouter = require('./controllers/add.controller')
+const removeRouter = require('./controllers/remove.controller')
 const app = express()
 const port = 3001
 const cors = require('cors')
 const expressWs = require('express-ws')
 const websocketService = require('./services/websocket.service')
 const drawRouter = require('./controllers/draw.controller')
+const editRouter = require('./controllers/edit.contoller')
 
 expressWs(app)
 
@@ -37,6 +40,11 @@ app.use(express.json())
 // Add Routes here
 app.use(config.WHITEBOARD_SESSION_PATH, whiteboardRouter)
 app.use(config.DRAW_PATH, drawRouter)
+app.use(config.ELEMENT_ADD_PATH, addRouter)
+app.use(config.ELEMENT_REMOVE_PATH, removeRouter)
+app.use(config.ELEMENT_EDIT_PATH, editRouter)
+
+
 
 // Add postprocessing middleware here
 app.use(middleware.unknownEndpoint)
