@@ -6,7 +6,8 @@ const middleware = require('./utils/middleware')
 const config = require('./utils/config')
 const whiteboardRouter = require('./controllers/whiteboard.controller')
 const app = express()
-const port = 3000
+const port = 3001
+const cors = require('cors')
 
 // Connect to DB
 mongoose.connect(config.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -16,6 +17,9 @@ mongoose.connect(config.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology
   .catch((error) => {
     console.log('Error connecting to MongoDB:', error.message)
   })
+
+// Add CORS
+app.use(cors())
 
 // Add preprocessing middleware here
 app.use(express.json())
