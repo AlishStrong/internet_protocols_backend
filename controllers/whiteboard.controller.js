@@ -5,27 +5,16 @@ const mongoose = require('mongoose')
 const User = require('../models/user.model')
 const Whiteboard = require('../models/whiteboard.model')
 const { WHITEBOARD_DOES_NOT_EXIST, FAILED_CREATING_HOST, UNAUTHORIZED, NAME_IS_MISSING, INCORRECT_PASSWORD, USER_IS_MISSING, DECISION_IS_MISSING, USER_DOES_NOT_EXIST, UNKNOWN_ISSUE } = require('../utils/error.constants')
-const { askHostToJoin, notifyUserAboutRequest } = require('../services/whiteboard.service')
-
-const getTokenFrom = request => {
-  const authorization = request.get('authorization')
-  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
-    return authorization.substring(7)
-  } else {
-    throw new Error(UNAUTHORIZED)
-  }
-}
+const { askHostToJoin, notifyUserAboutRequest, whiteboardExists, notifyAboutClosure } = require('../services/whiteboard.service')
+const { validateToken, validateRequest } = require('../services/auth.service')
 
 const createWhiteboard = async (request, response) => {
   const body = request.body
-
-  const hostName = body.creator ?? 'Session Host'
+  const hostName = body.creator ? body.creator : 'Session Host'
   const user = new User({
     name: hostName
   })
-
   let hostId, whiteboardId, token
-
   user.save()
     .then(createdHost => {
       hostId = createdHost._id
@@ -35,7 +24,7 @@ const createWhiteboard = async (request, response) => {
 
       const whiteboard = new Whiteboard({
         host: hostId,
-        name: (body.whiteboard && body.whiteboard.name) ?? 'New whiteboard',
+        name: (body.whiteboard && body.whiteboard.name) ? body.whiteboard.name : 'New whiteboard',
         users: [hostId],
         elements: []
       })
@@ -54,24 +43,16 @@ const createWhiteboard = async (request, response) => {
       }
       token = jwt.sign(tokenBody, process.env.SECRET)
     })
-    .catch(error => {
-      console.log(FAILED_CREATING_HOST, error)
-    })
-    .finally(() => response.status(200).send({ token, whiteboardId }))
+    .finally(() => response.status(200).send({ token, whiteboardId, hostId }))
 }
 
 const getWhiteboard = async (request, response) => {
-  const whiteboardId = new mongoose.Types.ObjectId(request.params.whiteboardId)
-  const whiteboard = await Whiteboard.findById(whiteboardId)
-
-  if (!whiteboard) throw new Error(WHITEBOARD_DOES_NOT_EXIST)
-
+  const whiteboard = await whiteboardExists(request.params.whiteboardId)
   const userList = whiteboard.users
-
-  const userToken = getTokenFrom(request)
-  const { hashedUserId } = jwt.verify(userToken, process.env.SECRET)
-  if (userList.find(user => bcrypt.compareSync(user.toString(), hashedUserId))) {
-    return response.status(200).send(`Welcome to whiteboard ${request.params.whiteboardId}`)
+  const { hashedUserId } = validateToken(request)
+  const userFound = userList.find(user => bcrypt.compareSync(user.toString(), hashedUserId))
+  if (userFound) {
+    return response.status(200).json({ whiteboard })
   } else {
     throw new Error(UNAUTHORIZED)
   }
@@ -79,18 +60,11 @@ const getWhiteboard = async (request, response) => {
 
 const requestToJoin = async (request, response) => {
   const body = request.body
-
   if (!body.name) {
     throw new Error(NAME_IS_MISSING)
   }
 
-  const whiteboardId = new mongoose.Types.ObjectId(request.params.whiteboardId)
-  const whiteboard = await Whiteboard.findById(whiteboardId)
-
-  if (!whiteboard) {
-    throw new Error(WHITEBOARD_DOES_NOT_EXIST)
-  }
-
+  const whiteboard = await whiteboardExists(request.params.whiteboardId)
   if ((whiteboard.password && !body.password) || (whiteboard.password !== body.password)) {
     throw new Error(INCORRECT_PASSWORD)
   }
@@ -99,18 +73,19 @@ const requestToJoin = async (request, response) => {
     name: body.name
   })
 
-  let userToken
+  let userToken, userId
 
   user.save()
     .then(newUser => {
       const tokenBody = {
         hashedUserId: bcrypt.hashSync(newUser._id.toString(), parseInt(process.env.ROUNDS)),
-        hashedSessionId: bcrypt.hashSync(whiteboardId.toString(), parseInt(process.env.ROUNDS))
+        hashedSessionId: bcrypt.hashSync(whiteboard._id.toString(), parseInt(process.env.ROUNDS))
       }
       userToken = jwt.sign(tokenBody, process.env.SECRET)
-      askHostToJoin(newUser._id.toString(), whiteboardId.toString())
+      userId = newUser._id.toString()
+      askHostToJoin(userId, whiteboard._id.toString())
     })
-    .finally(() => response.status(200).json({ userToken, message: 'Host has been notified about your request' }))
+    .finally(() => response.status(200).json({ userToken, userId, message: 'Host has been notified about your request' }))
 }
 
 const processRequest = async (request, response) => {
@@ -129,50 +104,36 @@ const processRequest = async (request, response) => {
     throw new Error(DECISION_IS_MISSING)
   }
 
-  const wId = new mongoose.Types.ObjectId(whiteboardId)
   const uId = new mongoose.Types.ObjectId(userId)
 
-  const whiteboard = await Whiteboard.findById(wId)
+  const whiteboard = await whiteboardExists(whiteboardId)
   const user = await User.findById(uId)
-
-  if (!whiteboard || !whiteboard._id) {
-    throw new Error(WHITEBOARD_DOES_NOT_EXIST)
-  }
-
   if (!user || !user._id) {
     throw new Error(USER_DOES_NOT_EXIST)
   }
 
-  const hostToken = getTokenFrom(request)
-  const { hashedUserId, hashedSessionId } = jwt.verify(hostToken, process.env.SECRET)
+  const { userCorrect: hostCorrect, sessionCorrect } = await validateRequest(request,
+    { userId: whiteboard.host.toString(), whiteboardId: whiteboard._id.toString() })
 
-  if (hashedUserId && hashedSessionId) {
-    const hostCorrect = await bcrypt.compare(whiteboard.host.toString(), hashedUserId)
-    const sessionCorrect = await bcrypt.compare(whiteboard._id.toString(), hashedSessionId)
-
-    if (!hostCorrect) {
-      throw new Error(UNAUTHORIZED)
-    }
-    if (!sessionCorrect) {
-      throw new Error(WHITEBOARD_DOES_NOT_EXIST)
-    }
-
-    let result
-    if (decision) {
-      result = await Whiteboard.findByIdAndUpdate(wId, { users: whiteboard.users.concat(uId) })
-    } else {
-      result = await User.findByIdAndDelete(uId)
-    }
-
-    if (result && result._id) {
-      notifyUserAboutRequest(userId, whiteboardId, decision)
-      return response.status(200).json({ message: `Request was ${decision ? 'approved' : 'declined'}` })
-    } else {
-      throw new Error(UNKNOWN_ISSUE)
-    }
-
-  } else {
+  if (!hostCorrect) {
     throw new Error(UNAUTHORIZED)
+  }
+  if (!sessionCorrect) {
+    throw new Error(WHITEBOARD_DOES_NOT_EXIST)
+  }
+
+  let result
+  if (decision) {
+    result = await Whiteboard.findByIdAndUpdate(whiteboard._id, { users: whiteboard.users.concat(uId) })
+  } else {
+    result = await User.findByIdAndDelete(uId)
+  }
+
+  if (result && result._id) {
+    notifyUserAboutRequest(userId, whiteboardId, decision)
+    return response.status(200).json({ message: `Request was ${decision ? 'approved' : 'declined'}` })
+  } else {
+    throw new Error(UNKNOWN_ISSUE)
   }
 }
 
@@ -191,37 +152,25 @@ const isProtected = async (request, response) => {
 }
 
 const closeWhiteboard = async (request, response) => {
-  const whiteboardId = new mongoose.Types.ObjectId(request.params.whiteboardId)
-  const whiteboardToClose = await Whiteboard.findById(whiteboardId)
+  const whiteboardToClose = await whiteboardExists(request.params.whiteboardId)
 
-  if (!whiteboardToClose || !whiteboardToClose._id) {
-    console.log(`Whiteboard ${whiteboardId} does not exist`)
-    throw new Error(WHITEBOARD_DOES_NOT_EXIST)
+  const { userCorrect: hostCorrect, sessionCorrect } = await validateRequest(request,
+    { userId: whiteboardToClose.host.toString(), whiteboardId: whiteboardToClose._id.toString() })
+
+  if (hostCorrect && sessionCorrect) {
+    whiteboardToClose.users.forEach(async userId => {
+      await User.deleteOne({ _id: userId })
+    })
+    await Whiteboard.deleteOne({ _id: whiteboardToClose._id })
+    notifyAboutClosure(whiteboardToClose._id.toString())
+    return response.status(200).send({ message: 'Whiteboard closed' })
   }
 
-  const hostToken = getTokenFrom(request)
-  const { hashedUserId, hashedSessionId } = jwt.verify(hostToken, process.env.SECRET)
-
-  if (hashedUserId && hashedSessionId) {
-    const hostCorrect = await bcrypt.compare(whiteboardToClose.host.toString(), hashedUserId)
-    const sessionCorrect = await bcrypt.compare(whiteboardToClose._id.toString(), hashedSessionId)
-
-    if (hostCorrect && sessionCorrect) {
-      whiteboardToClose.users.forEach(async userId => {
-        await User.deleteOne({ _id: userId })
-      })
-      await Whiteboard.deleteOne({ _id: whiteboardToClose._id })
-      return response.status(200).send({ message: 'Whiteboard closed' })
-    }
-
-    if (!hostCorrect) {
-      throw new Error(UNAUTHORIZED)
-    }
-    if (!sessionCorrect) {
-      throw new Error(WHITEBOARD_DOES_NOT_EXIST)
-    }
-  } else {
+  if (!hostCorrect) {
     throw new Error(UNAUTHORIZED)
+  }
+  if (!sessionCorrect) {
+    throw new Error(WHITEBOARD_DOES_NOT_EXIST)
   }
 }
 
