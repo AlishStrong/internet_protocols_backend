@@ -70,8 +70,18 @@ const getWhiteboard = async (request, response) => {
 
   const userToken = getTokenFrom(request)
   const { hashedUserId } = jwt.verify(userToken, process.env.SECRET)
-  if (userList.find(user => bcrypt.compareSync(user.toString(), hashedUserId))) {
-    return response.status(200).send(`Welcome to whiteboard ${request.params.whiteboardId}`)
+  let userId
+  userList.map(user => {
+    const found = bcrypt.compareSync(user.toString(), hashedUserId)
+    if (found) {
+      userId = user
+    }
+  })
+  if (userId) {
+    return response.status(200).json({
+      whiteboardId,
+      userId
+    })
   } else {
     throw new Error(UNAUTHORIZED)
   }
