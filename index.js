@@ -5,6 +5,7 @@ const express = require('express')
 const middleware = require('./utils/middleware')
 const config = require('./utils/config')
 const whiteboardRouter = require('./controllers/whiteboard.controller')
+const removeRouter = require('./controllers/remove.controller')
 const app = express()
 const port = 3000
 
@@ -22,6 +23,8 @@ app.use(express.json())
 
 // Add Routes here
 app.use(config.WHITEBOARD_SESSION_PATH, whiteboardRouter)
+app.use(config.ELEMENT_REMOVE_PATH, removeRouter)
+
 
 // Add postprocessing middleware here
 app.use(middleware.unknownEndpoint)

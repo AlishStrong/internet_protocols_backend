@@ -22,9 +22,8 @@ const removeController = async (request, response) => {
   const elementList = whiteboard.elements
 
   switch(actionId) {
-    //Use Case 8: User removes a sticky note from the whiteboard
+    //Use Case 8 & use Case 10: Remove image / sticky note from the whiteboard
     case 8:{
-      // not sure if this check is necessary or if the Element.findById check is enough
       if (elementList.find(e => e === element)) {
         removeObject(elementId,whiteboardId).then((res) => {
           response.status(200).send(res)
@@ -37,19 +36,7 @@ const removeController = async (request, response) => {
       }
       break
     }
-    //Use Case 10: User removes an image from the whiteboard
-    case 10:{
-      if (elementList.find(e => e === element)) {
-        removeObject(elementId,whiteboardId).then((res) => {
-          response.status(200).send(res)
-        }).catch((e) => {
-          throw new Error(e)
-        })
-      } else {
-        throw new Error(REMOVAL_ERROR)
-      }
-      break
-    }
+
     //Use Case 12: User removes a comment from the image on the whiteboard
     case 12:{
       if (elementList.find(e => e === element)) {
