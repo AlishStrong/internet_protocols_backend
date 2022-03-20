@@ -19,7 +19,7 @@ const getTokenFrom = request => {
 const createWhiteboard = async (request, response) => {
   const body = request.body
 
-  const hostName = body.creator ?? 'Session Host'
+  const hostName = body.creator ? body.creator : 'Session Host'
   const user = new User({
     name: hostName
   })
@@ -35,7 +35,7 @@ const createWhiteboard = async (request, response) => {
 
       const whiteboard = new Whiteboard({
         host: hostId,
-        name: (body.whiteboard && body.whiteboard.name) ?? 'New whiteboard',
+        name: (body.whiteboard && body.whiteboard.name) ? body.whiteboard.name : 'New whiteboard',
         users: [hostId],
         elements: []
       })
@@ -70,8 +70,9 @@ const getWhiteboard = async (request, response) => {
 
   const userToken = getTokenFrom(request)
   const { hashedUserId } = jwt.verify(userToken, process.env.SECRET)
-  if (userList.find(user => bcrypt.compareSync(user.toString(), hashedUserId))) {
-    return response.status(200).send(`Welcome to whiteboard ${request.params.whiteboardId}`)
+  const userFound = userList.find(user => bcrypt.compareSync(user.toString(), hashedUserId))
+  if (userFound) {
+    return response.status(200).json({ whiteboard })
   } else {
     throw new Error(UNAUTHORIZED)
   }

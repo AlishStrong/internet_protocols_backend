@@ -14,14 +14,14 @@ Content-Type: application/json
 ###
 
 DELETE {{url}}/6c3121aa324e
-Authorization: bearer eyJOiIkMmIkMTEkLzMyZU5CaGtOMEpuU2JPdkkwQWsuT3MwpQdDFuMDhZWmJYTGkiLCJoYXNoZWRTZXNzaW9uSWQiOiIkMmIkMTEkSi40aU9PMjlmemxlT05JUUgxQUNYdXBmc2FEN2Z5NXIzRHZoeHl5a2JZTnV6NTVwZ0ZYSnkiLCJpYXQiOjE2NDc0Njg0NTF9.2q8CWuTEFlq8JnvSWU1XvWdyqa0J1_KLup11Z1DcPXw
+Authorization: bearer
 ###
 
 GET {{url}}/is-protected/62f55e0ba428a
 
 ###
 GET {{url}}/62325fa249d89e
-Authorization: bearer eyJhbGciOeyJoYXNoZWRVc2VySWQiOiIkMTFNZL3ZMdDQ4bUVYakQ4eWpQdDFuMDhZWmJYTGkiLCJoYXNoZWRTZXNzaW9uSWQiOiIkMmIkMTEkSi40aU9PMjlmemxlT05JUUgxQUNYdXBmc2FEN2Z5NXIzRHZoeHl5a2JZTnV6NTVwZ0ZYSnkiLCJpYXQiOjE2NDc0Njg0NTF9.2q8CWuTEFlq8JnvSWU1XvWdyqa0J1_KLup11Z1DcPXw
+Authorization: bearer 
 
 ###
 POST {{url}}/request-to-join/623260e6f48a
@@ -36,7 +36,7 @@ Content-Type: application/json
 
 ###
 POST {{url}}/process-request-to-join
-Authorization: bearer CJ9.eyJoYXNoZWRVc2VySblY2Z2FYWVBSWndydTcxOH2ttZzBXdVVtMzB0M0MiLCJoYXNoZWRTZXNzaW9uSWQiOiIkMmIkMTEkTDk5dWlMcmZrbmoxNGVmWjJYc1RlLlZDeThxMk1LU3hOZUhZdEtyOXVkOG1HaTEyTGthMEsiLCJpYXQiOjE2NDc0Njg3NzR9.l_frmB7KxagLUfjrmrxOXNTgPpIglGiEencATXytqhY
+Authorization: bearer
 Content-Type: application/json
 
 {
