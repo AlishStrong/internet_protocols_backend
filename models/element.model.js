@@ -2,11 +2,13 @@ const mongoose = require('mongoose')
 
 const elementSchema = new mongoose.Schema({
   type: { type: String, required: true },
-  coordinates: [{
+  elementId: { type: Number, required: true },
+  whiteboardId: { type: Number, required: true },
+  pos: [{
     x: { type: Number, required: true },
     y: { type: Number, required: true }
   }],
-  stickyNoteText: { type: String, required: false },
+  text: { type: String, required: false },
   img:{
     data: { type: Buffer, required: false },
     contentType: { type: String, required: false },

@@ -5,9 +5,9 @@ const express = require('express')
 const middleware = require('./utils/middleware')
 const config = require('./utils/config')
 const whiteboardRouter = require('./controllers/whiteboard.controller')
-const removeRouter = require('./controllers/remove.controller')
+const addRouter = require('./controllers/add.controller')
 const app = express()
-const port = 3000
+const port = 3001
 
 // Connect to DB
 mongoose.connect(config.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -23,7 +23,7 @@ app.use(express.json())
 
 // Add Routes here
 app.use(config.WHITEBOARD_SESSION_PATH, whiteboardRouter)
-app.use(config.ELEMENT_REMOVE_PATH, removeRouter)
+app.use(config.ELEMENT_ADD_PATH, addRouter)
 
 
 // Add postprocessing middleware here

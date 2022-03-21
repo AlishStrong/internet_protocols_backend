@@ -2,50 +2,53 @@ const addRouter = require('express').Router()
 const mongoose = require('mongoose')
 const Whiteboard = require('../models/whiteboard.model')
 const Element = require('../models/element.model')
-const { addImage, addImageComment } = require('../services/add.service')
+const { addElement } = require('../services/add.service')
+const { WHITEBOARD_DOES_NOT_EXIST, UNKNOWN_ACTIONID, FAILED_CREATING_ELEMENT, UNKNOWN_ISSUE } = require('../utils/error.constants')
 
-const { WHITEBOARD_DOES_NOT_EXIST, ELEMENT_DOES_NOT_EXIST, UNKNOWN_ACTIONID, ADD_ERROR } = require('../utils/error.constants')
 
 const addController = async (request, response) => {
   const body = request.body
-  const elementId = new mongoose.Types.ObjectId(body.elementId)
   const whiteboardId = new mongoose.Types.ObjectId(body.whiteboardId)
   const actionId = body.actionId
-
 
   const whiteboard = await Whiteboard.findById(whiteboardId)
   if (!whiteboard) throw new Error(WHITEBOARD_DOES_NOT_EXIST)
 
-  const element = await Element.findById(elementId)
-  if (!element) throw new Error(ELEMENT_DOES_NOT_EXIST)
-
-
-  const elementList = whiteboard.elements
-
   switch(actionId) {
-    //Use Case 9: User adds an image to the whiteboard
-    case 9:{
-      const pos = body.newPos
-      const image = body.image
-      addImage(elementId,whiteboardId,pos,image).then((res) => {
-        response.status(200).send(res)
-      }).catch((e) => {
-        throw new Error(e)
-      })
-      break
-    }
-    //Use Case 11: User adds a comment to an image on the whiteboard
-    case 11:{
-      const comment = body.image
-      if (elementList.find(e => e === element)) {
-        addImageComment(elementId,whiteboardId,comment).then((res) => {
-          response.status(200).send(res)
-        }).catch((e) => {
-          throw new Error(e)
-        })
-      } else {
-        throw new Error(ADD_ERROR)
+    //Use Case 6&9: User adds an image/note to the whiteboard
+    case 6:{
+      const id = body.elementId
+      const pos = body.pos
+      const editState = body.editState
+      let elementType = ''
+      if(body.text){
+        elementType = 'StickyNote'
+      }else{
+        elementType = 'Image'
       }
+      const text = body.text
+      const element = new Element({
+        elementId: id,
+        whiteboardId: whiteboardId,
+        editState: editState,
+        pos: pos,
+        text: text,
+        type: elementType
+      })
+      element.save().then(createdElement => {
+        if(!createdElement._id){
+          throw new Error(FAILED_CREATING_ELEMENT)
+        }
+        if(elementType === 'Stickynote'){
+          addElement().then((res) => {
+            response.status(200).send(res)
+          }).catch((e) => {
+            console.log(e)
+            throw new Error(UNKNOWN_ISSUE)
+          })
+        }
+
+      })
       break
     }
     default:

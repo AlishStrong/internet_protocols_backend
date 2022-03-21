@@ -12,6 +12,7 @@ const DECISION_IS_MISSING = 'Decision over the request is missing'
 const REMOVAL_ERROR = 'Removing the element failed'
 const UNKNOWN_ACTIONID = 'Unknown action id'
 const ADD_ERROR = 'Unknown error while adding an element / adding to an element'
+const FAILED_CREATING_ELEMENT = 'Failed creating the element'
 
 module.exports = {
   UNAUTHORIZED,
@@ -27,5 +28,6 @@ module.exports = {
   USER_DOES_NOT_EXIST,
   REMOVAL_ERROR,
   UNKNOWN_ACTIONID,
-  ADD_ERROR
+  ADD_ERROR,
+  FAILED_CREATING_ELEMENT
 }
