@@ -8,6 +8,7 @@ const whiteboardRouter = require('./controllers/whiteboard.controller')
 const app = express()
 const port = 3001
 const cors = require('cors')
+const drawRouter = require('./controllers/draw.controller')
 
 // Connect to DB
 mongoose.connect(config.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -26,6 +27,7 @@ app.use(express.json())
 
 // Add Routes here
 app.use(config.WHITEBOARD_SESSION_PATH, whiteboardRouter)
+app.use(config.DRAW_PATH, drawRouter)
 
 // Add postprocessing middleware here
 app.use(middleware.unknownEndpoint)
