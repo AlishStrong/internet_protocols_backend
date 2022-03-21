@@ -8,6 +8,15 @@ const whiteboardRouter = require('./controllers/whiteboard.controller')
 const app = express()
 const port = 3001
 const cors = require('cors')
+const expressWs = require('express-ws')
+const websocketService = require('./services/websocket.service')
+
+expressWs(app)
+
+// WebSocket configuration
+app.ws('/ws', (ws) => {
+  ws.on('message', (msg) => websocketService.processMessage(msg, ws))
+})
 
 // Connect to DB
 mongoose.connect(config.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })

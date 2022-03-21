@@ -57,7 +57,7 @@ const createWhiteboard = async (request, response) => {
     .catch(error => {
       console.log(FAILED_CREATING_HOST, error)
     })
-    .finally(() => response.status(200).send({ token, whiteboardId }))
+    .finally(() => response.status(200).send({ token, whiteboardId, hostId }))
 }
 
 const getWhiteboard = async (request, response) => {
