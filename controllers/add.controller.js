@@ -20,6 +20,7 @@ const addController = async (request, response) => {
       const id = body.elementId
       const pos = body.pos
       const editState = body.editState
+      const currentUser = body.currentUser
       let elementType = ''
       if(body.text !== undefined){
         elementType = 'StickyNote'
@@ -33,7 +34,8 @@ const addController = async (request, response) => {
         editState: editState,
         pos: pos,
         text: text,
-        elementType: elementType
+        elementType: elementType,
+        currentUser: currentUser
       })
       element.save().then(createdElement => {
         if(!createdElement._id){

@@ -10,6 +10,7 @@ const removeRouter = require('./controllers/remove.controller')
 const app = express()
 const port = 3001
 const cors = require('cors')
+const editRouter = require('./controllers/edit.contoller')
 
 // Connect to DB
 mongoose.connect(config.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -30,6 +31,7 @@ app.use(express.json())
 app.use(config.WHITEBOARD_SESSION_PATH, whiteboardRouter)
 app.use(config.ELEMENT_ADD_PATH, addRouter)
 app.use(config.ELEMENT_REMOVE_PATH, removeRouter)
+app.use(config.ELEMENT_EDIT_PATH, editRouter)
 
 
 

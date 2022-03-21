@@ -4,6 +4,8 @@ const elementSchema = new mongoose.Schema({
   elementType: { type: String, required: true },
   elementId: { type: String, required: true },
   whiteboardId: { type: Number, required: true },
+  editState: { type: Boolean, required: true },
+  currentUser: { type: String, required: true },
   pos: [{
     x: { type: Number, required: true },
     y: { type: Number, required: true }
