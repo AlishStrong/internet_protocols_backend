@@ -1,8 +1,8 @@
 const mongoose = require('mongoose')
 
 const elementSchema = new mongoose.Schema({
-  type: { type: String, required: true },
-  elementId: { type: Number, required: true },
+  elementType: { type: String, required: true },
+  elementId: { type: String, required: true },
   whiteboardId: { type: Number, required: true },
   pos: [{
     x: { type: Number, required: true },

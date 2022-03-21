@@ -6,8 +6,10 @@ const middleware = require('./utils/middleware')
 const config = require('./utils/config')
 const whiteboardRouter = require('./controllers/whiteboard.controller')
 const addRouter = require('./controllers/add.controller')
+const removeRouter = require('./controllers/remove.controller')
 const app = express()
 const port = 3001
+const cors = require('cors')
 
 // Connect to DB
 mongoose.connect(config.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -18,12 +20,17 @@ mongoose.connect(config.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology
     console.log('Error connecting to MongoDB:', error.message)
   })
 
+// Add CORS
+app.use(cors())
+
 // Add preprocessing middleware here
 app.use(express.json())
 
 // Add Routes here
 app.use(config.WHITEBOARD_SESSION_PATH, whiteboardRouter)
 app.use(config.ELEMENT_ADD_PATH, addRouter)
+app.use(config.ELEMENT_REMOVE_PATH, removeRouter)
+
 
 
 // Add postprocessing middleware here
