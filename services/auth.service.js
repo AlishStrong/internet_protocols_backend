@@ -37,7 +37,19 @@ const validateRequest = async (request, { userId, whiteboardId }) => {
   }
 }
 
+const validateWebSocketMessage = async (token, userId, whiteboardId) => {
+  try {
+    const { hashedUserId, hashedSessionId } = jwt.verify(token, process.env.SECRET)
+    const userCorrect = await bcrypt.compare(userId, hashedUserId)
+    const sessionCorrect = await bcrypt.compare(whiteboardId, hashedSessionId)
+    return userCorrect && sessionCorrect
+  } catch (error) {
+    return false
+  }
+}
+
 module.exports = {
   validateToken,
-  validateRequest
+  validateRequest,
+  validateWebSocketMessage
 }

@@ -73,7 +73,7 @@ const requestToJoin = async (request, response) => {
     name: body.name
   })
 
-  let userToken
+  let userToken, userId
 
   user.save()
     .then(newUser => {
@@ -82,9 +82,10 @@ const requestToJoin = async (request, response) => {
         hashedSessionId: bcrypt.hashSync(whiteboard._id.toString(), parseInt(process.env.ROUNDS))
       }
       userToken = jwt.sign(tokenBody, process.env.SECRET)
-      askHostToJoin(newUser._id.toString(), whiteboard._id.toString())
+      userId = newUser._id.toString()
+      askHostToJoin(userId, whiteboard._id.toString())
     })
-    .finally(() => response.status(200).json({ userToken, message: 'Host has been notified about your request' }))
+    .finally(() => response.status(200).json({ userToken, userId, message: 'Host has been notified about your request' }))
 }
 
 const processRequest = async (request, response) => {
