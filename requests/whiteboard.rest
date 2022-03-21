@@ -1,4 +1,4 @@
-@url = http://localhost:3000/api/whiteboard
+@url = http://localhost:3001/api/whiteboard
 
 POST {{url}}
 Content-Type: application/json
