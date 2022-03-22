@@ -125,6 +125,26 @@ const processConnectionMessage = async (connectionMessage, clients, ws) => {
   }
 }
 
+const processDrawingMessage = async (clientMessage, clientsArray) => {
+  const { token, status, userId, whiteboardId, strokes, messageType } = clientMessage
+  const valid = await validateWebSocketMessage(token, userId, whiteboardId)
+  if (valid && (status === 'host' || status === 'user')) {
+    // update all clients except the drawer!
+    const clientsGroup = clientsArray.find(wcg => wcg.whiteboardId === whiteboardId)
+    if (clientsGroup) {
+      clientsGroup.clients.filter(c => c.userId !== userId).forEach(c => {
+        c.ws.send(JSON.stringify({
+          whiteboardId,
+          messageType,
+          userId,
+          strokes,
+          status
+        }))
+      })
+    }
+  }
+}
+
 const processMessageFromClient = async (msg, clientsArray, ws) => {
 
   const clientMessage = JSON.parse(msg)
@@ -134,13 +154,17 @@ const processMessageFromClient = async (msg, clientsArray, ws) => {
       await processConnectionMessage(clientMessage, clientsArray, ws)
       break
 
+    case 'drawing':
+      console.log('websocketService processMessage drawing')
+      await processDrawingMessage(clientMessage, clientsArray)
+      break
     default:
       console.log('websocketService processMessage unknown')
       break
   }
 
-  clientsArray.forEach(ws => {
-    console.log('websocketService processMessage client', ws)
+  clientsArray.forEach(wss => {
+    console.log('websocketService processMessage client', wss)
   })
 }
 

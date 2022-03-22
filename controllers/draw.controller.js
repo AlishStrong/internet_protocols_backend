@@ -1,29 +1,15 @@
+/* eslint-disable no-unused-vars */
 const drawRouter = require('express').Router()
-const jwt = require('jsonwebtoken')
-const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
-const User = require('../models/user.model')
 const Whiteboard = require('../models/whiteboard.model')
 const Drawing = require('../models/draw.model')
 const {
   WHITEBOARD_DOES_NOT_EXIST,
   UNAUTHORIZED,
-  INCORRECT_PASSWORD,
-  USER_IS_MISSING,
-  USER_DOES_NOT_EXIST,
   UNKNOWN_ISSUE, FAILED_CREATING_DRAW,
 } = require('../utils/error.constants')
-const { response } = require('express')
-const { draw, undo, erase } = require('../services/draw.service')
-
-const getTokenFrom = request => {
-  const authorization = request.get('authorization')
-  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
-    return authorization.substring(7)
-  } else {
-    throw new Error(UNAUTHORIZED)
-  }
-}
+const { draw, drawingExists } = require('../services/draw.service')
+const { validateRequest } = require('../services/auth.service')
 
 const drawController = async (request, response) => {
   const body = request.body
@@ -41,50 +27,64 @@ const drawController = async (request, response) => {
     throw new Error(WHITEBOARD_DOES_NOT_EXIST)
   }
   switch (body.actionId) {
-  case 13:
-    const strokes = body.strokes
-    const drawing = new Drawing({
-      whiteboardId: whiteboardId,
-      // userId: userId,
-      strokes: strokes
-    })
-    drawing.save().then(createdDraw => {
-      if(!createdDraw._id) {
-        throw new Error(FAILED_CREATING_DRAW)
-      }
-      draw(0, whiteboardId)
-      .then((res) => {
-        response.status(200).send(res)
+    case 13: {
+      const strokes = body.strokes
+      const drawing = new Drawing({
+        whiteboardId: whiteboardId,
+        // userId: userId,
+        strokes: strokes
       })
-      .catch((e) => {
-          throw new Error(UNKNOWN_ISSUE)
+      drawing.save().then(createdDraw => {
+        if(!createdDraw._id) {
+          throw new Error(FAILED_CREATING_DRAW)
         }
-      )
-    })
-    break
-  // case 17:
-  //   undo(userId, whiteboardId)
-  //   .then((res) => {
-  //     response.status(200).send(res)
-  //   })
-  //   .catch((e) => {
-  //     throw new Error(UNKNOWN_ISSUE)
-  //   })
-  //   break
-  // case 18:
-  //   erase(userId, whiteboardId)
-  //   .then((res) => {
-  //     response.status(200).send(res)
-  //   })
-  //   .catch((e) => {
-  //     throw new Error(UNKNOWN_ISSUE)
-  //   })
-  //   break
-  default:
-    throw new Error(UNKNOWN_ISSUE)
+        draw(0, whiteboardId)
+          .then((res) => {
+            response.status(200).send(res)
+          })
+          .catch((e) => {
+            throw new Error(UNKNOWN_ISSUE)
+          }
+          )
+      })
+    }
+      break
+      // case 17:
+      //   undo(userId, whiteboardId)
+      //   .then((res) => {
+      //     response.status(200).send(res)
+      //   })
+      //   .catch((e) => {
+      //     throw new Error(UNKNOWN_ISSUE)
+      //   })
+      //   break
+      // case 18:
+      //   erase(userId, whiteboardId)
+      //   .then((res) => {
+      //     response.status(200).send(res)
+      //   })
+      //   .catch((e) => {
+      //     throw new Error(UNKNOWN_ISSUE)
+      //   })
+      //   break
+    default:
+      throw new Error(UNKNOWN_ISSUE)
+  }
+}
+
+const getStrokesByWhiteboardId = async (request, response) => {
+  const drawing = await drawingExists(request.params.whiteboardId)
+  const { sessionCorrect } = await validateRequest(request,
+    { whiteboardId: drawing.whiteboardId.toString() })
+
+  if (sessionCorrect) {
+    return response.status(200).json({ strokes: drawing.strokes })
+  } else {
+    throw new Error(UNAUTHORIZED)
   }
 }
 
 drawRouter.post('/', drawController)
+drawRouter.get('/:whiteboardId', getStrokesByWhiteboardId)
 
 module.exports = drawRouter

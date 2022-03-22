@@ -9,6 +9,7 @@ const NAME_IS_MISSING = 'Name is missing'
 const UNKNOWN_ISSUE = 'Something went wrong'
 const USER_IS_MISSING = 'User is missing'
 const DECISION_IS_MISSING = 'Decision over the request is missing'
+const DRAWING_DOES_NOT_EXIST = 'DRAWING does not exist'
 
 module.exports = {
   UNAUTHORIZED,
@@ -20,5 +21,7 @@ module.exports = {
   NAME_IS_MISSING,
   USER_IS_MISSING,
   DECISION_IS_MISSING,
-  USER_DOES_NOT_EXIST
+  USER_DOES_NOT_EXIST,
+  DRAWING_DOES_NOT_EXIST,
+  FAILED_CREATING_DRAW
 }

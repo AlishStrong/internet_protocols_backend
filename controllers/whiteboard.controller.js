@@ -42,6 +42,8 @@ const createWhiteboard = async (request, response) => {
         hashedSessionId: bcrypt.hashSync(whiteboardId.toString(), parseInt(process.env.ROUNDS))
       }
       token = jwt.sign(tokenBody, process.env.SECRET)
+      // Create Draw
+
     })
     .finally(() => response.status(200).send({ token, whiteboardId, hostId }))
 }

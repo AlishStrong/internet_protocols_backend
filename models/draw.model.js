@@ -8,7 +8,7 @@ const pointSchema = new mongoose.Schema({
 })
 const drawSchema = new mongoose.Schema({
   whiteboardId: { type: mongoose.Types.ObjectId, required: true },
-  userId: {type: mongoose.Types.ObjectId},
+  userId: { type: mongoose.Types.ObjectId },
   strokes: {
     type: [[pointSchema]],
   },
