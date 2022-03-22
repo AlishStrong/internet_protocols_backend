@@ -5,7 +5,7 @@ const mongoose = require('mongoose')
 const User = require('../models/user.model')
 const Whiteboard = require('../models/whiteboard.model')
 const { WHITEBOARD_DOES_NOT_EXIST, FAILED_CREATING_HOST, UNAUTHORIZED, NAME_IS_MISSING, INCORRECT_PASSWORD, USER_IS_MISSING, DECISION_IS_MISSING, USER_DOES_NOT_EXIST, UNKNOWN_ISSUE } = require('../utils/error.constants')
-const { askHostToJoin, notifyUserAboutRequest, whiteboardExists } = require('../services/whiteboard.service')
+const { askHostToJoin, notifyUserAboutRequest, whiteboardExists, notifyAboutClosure } = require('../services/whiteboard.service')
 const { validateToken, validateRequest } = require('../services/auth.service')
 
 const createWhiteboard = async (request, response) => {
@@ -162,6 +162,7 @@ const closeWhiteboard = async (request, response) => {
       await User.deleteOne({ _id: userId })
     })
     await Whiteboard.deleteOne({ _id: whiteboardToClose._id })
+    notifyAboutClosure(whiteboardToClose._id.toString())
     return response.status(200).send({ message: 'Whiteboard closed' })
   }
 

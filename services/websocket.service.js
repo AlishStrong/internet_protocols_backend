@@ -59,6 +59,24 @@ const processConnectionMessage = async (connectionMessage, clients, ws) => {
           }
           return c
         })
+
+        if (clientExists.status === 'pending') {
+          // let host know about the pending request again
+          const hostClient = clientsGroupExists.clients.find(c => c.status === 'host')
+          if (hostClient && hostClient.ws) {
+            console.log('processConnectionMessage notifying host about pending request')
+            // send message to host with data about the pending user
+            const messageObj = {
+              userId,
+              status,
+              whiteboardId,
+              messageType: 'joining'
+            }
+            hostClient.ws.send(JSON.stringify(messageObj))
+          } else {
+            ws.close(UNAUTHORIZED_CODE, UNAUTHORIZED_MESSAGE) // host is missing! Terminate it
+          }
+        }
       } else {
         switch (status) {
           case 'host':
@@ -126,10 +144,56 @@ const processMessageFromClient = async (msg, clientsArray, ws) => {
   })
 }
 
+const sendJoiningDecision = (msg, clientsArray) => {
+  const wcg = clientsArray.find(g => g.whiteboardId === msg.whiteboardId)
+  if (msg.status === 'approved') {
+    // update status from 'pending' to 'user' and notify all
+    wcg.clients.map(c => {
+      c.ws.send(JSON.stringify(msg))
+      if (c.userId === msg.userId && c.status === 'pending') {
+        c.status = 'user'
+      }
+      return c
+    })
+  } else {
+    // remove client and notify all
+    wcg.clients.filter(c => {
+      c.ws.send(JSON.stringify(msg))
+      if (c.userId === msg.userId && c.status === 'pending') {
+        return false
+      }
+      return true
+    })
+  }
+}
+
+const sendTerminationNotice = (msg, clientsArray) => {
+  const toRemove = clientsArray.find(c => c.whiteboardId === msg.whiteboardId)
+  if (toRemove) {
+    toRemove.clients.forEach(c => c.ws.send(JSON.stringify(msg)))
+  }
+  websocketService.clients = clientsArray.filter(c => c.whiteboardId !== msg.whiteboardId)
+}
+
+const preprocessMessage = (msg, clientsArray) => {
+  if (msg.messageType === 'joining') {
+    sendJoiningDecision(msg, clientsArray)
+  }
+
+  if (msg.messageType === 'connection' && msg.status === 'closed') {
+    sendTerminationNotice(msg, clientsArray)
+  }
+
+  clientsArray.forEach(ws => {
+    console.log('websocketService preprocessMessage client', ws)
+  })
+}
+
 const websocketService = {
   clients: [], // type WhiteboardClientsGroup[]
   sendMessage: function(message) {
     console.log('websocketService sendMessage message', message)
+    preprocessMessage(message, this.clients)
   },
   processMessage: async function(msg, ws) {
     await processMessageFromClient(msg, this.clients, ws)
