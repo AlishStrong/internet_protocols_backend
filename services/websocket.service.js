@@ -145,6 +145,26 @@ const processDrawingMessage = async (clientMessage, clientsArray) => {
   }
 }
 
+const processImageMessage = async (clientMessage, clientsArray) => {
+  const { token, status, userId, whiteboardId, images, messageType } = clientMessage
+  const valid = await validateWebSocketMessage(token, userId, whiteboardId)
+  if (valid && (status === 'host' || status === 'user')) {
+    // update all clients except the drawer!
+    const clientsGroup = clientsArray.find(wcg => wcg.whiteboardId === whiteboardId)
+    if (clientsGroup) {
+      clientsGroup.clients.filter(c => c.userId !== userId).forEach(c => {
+        c.ws.send(JSON.stringify({
+          whiteboardId,
+          messageType,
+          userId,
+          images,
+          status
+        }))
+      })
+    }
+  }
+}
+
 const processMessageFromClient = async (msg, clientsArray, ws) => {
 
   const clientMessage = JSON.parse(msg)
@@ -158,14 +178,15 @@ const processMessageFromClient = async (msg, clientsArray, ws) => {
       console.log('websocketService processMessage drawing')
       await processDrawingMessage(clientMessage, clientsArray)
       break
+
+    case 'image':
+      console.log('websocketService processMessage image')
+      await processImageMessage(clientMessage, clientsArray)
+      break
     default:
       console.log('websocketService processMessage unknown')
       break
   }
-
-  clientsArray.forEach(wss => {
-    console.log('websocketService processMessage client', wss)
-  })
 }
 
 const sendJoiningDecision = (msg, clientsArray) => {
