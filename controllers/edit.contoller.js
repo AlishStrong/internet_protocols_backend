@@ -42,6 +42,16 @@ const editController = async (request, response) => {
 
       break
     }
+    case 11:{
+      const id = body.elementId
+      const pos = body.pos
+      const comments = body.comments
+      Element.findOneAndUpdate({ elementId: id, whiteboardId: whiteboardId }, { pos: pos, comments: comments }, function (err) {
+        if (err) throw new Error(err)
+        else response.status(200).send('Element updated succesfully, updated element ID:' + id)
+      })
+      break
+    }
     default:
       throw new Error(UNKNOWN_ACTIONID)
   }

@@ -12,10 +12,10 @@ const elementSchema = new mongoose.Schema({
   }],
   text: { type: String, required: false },
   img:{
-    data: { type: Buffer, required: false },
+    data: { type: String, required: false },
     contentType: { type: String, required: false },
-    comment: { type: String, required: false }
-  }
+  },
+  comments: [{ type: String, required: false }]
 })
 
 const Element = mongoose.model('Element', elementSchema)

@@ -2,7 +2,7 @@ const addRouter = require('express').Router()
 const mongoose = require('mongoose')
 const Whiteboard = require('../models/whiteboard.model')
 const Element = require('../models/element.model')
-const { addElement } = require('../services/add.service')
+const { addElement,addImageElement } = require('../services/add.service')
 const { WHITEBOARD_DOES_NOT_EXIST, UNKNOWN_ACTIONID, FAILED_CREATING_ELEMENT, UNKNOWN_ISSUE } = require('../utils/error.constants')
 
 
@@ -21,12 +21,7 @@ const addController = async (request, response) => {
       const pos = body.pos
       const editState = body.editState
       const currentUser = body.currentUser
-      let elementType = ''
-      if(body.text !== undefined){
-        elementType = 'StickyNote'
-      }else{
-        elementType = 'Image'
-      }
+      let elementType = 'StickyNote'
       const text = body.text
       const element = new Element({
         elementId: id,
@@ -50,6 +45,39 @@ const addController = async (request, response) => {
           })
         }
 
+      })
+      break
+    }
+    case 9:{
+      const id = body.elementId
+      const pos = body.pos
+      const editState = body.editState
+      const currentUser = body.currentUser
+      const comments = body.comments
+      const src = body.src
+      let elementType = 'Image'
+      const element = new Element({
+        elementId: id,
+        whiteboardId: whiteboardId,
+        editState: editState,
+        pos: pos,
+        img: {
+          data: src,
+        },
+        comments: comments,
+        elementType: elementType,
+        currentUser: currentUser
+      })
+      element.save().then(createdElement => {
+        if(!createdElement._id){
+          throw new Error(FAILED_CREATING_ELEMENT)
+        }
+        addImageElement().then((res) => {
+          response.status(200).send(res)
+        }).catch((e) => {
+          console.log(e)
+          throw new Error(UNKNOWN_ISSUE)
+        })
       })
       break
     }
